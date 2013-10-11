@@ -6,7 +6,18 @@ module I18n
       def log(keys)
         keys = keys.dup
         key = keys.pop.to_s
-        log = keys.inject(self) { |log, k| log.key?(k.to_s) ? log[k.to_s] : log[k.to_s] = {} }
+        log = keys.inject(self) do |log, k|
+          sublog = if log.key?(k.to_s)
+            log[k.to_s]
+          else
+            log[k.to_s] = {}
+          end
+          if sublog.is_a?(String)
+            string_key = (keys.take_while { |key| key != k } + [k]).join('.')
+            raise "Invalid key hierarchy: can't define #{keys.join('.')}.#{key} because #{string_key} is already defined."
+          end
+          sublog
+        end
         log[key] = key.to_s.gsub('_', ' ').gsub(/\b('?[a-z])/) { $1.capitalize }
       end
 
